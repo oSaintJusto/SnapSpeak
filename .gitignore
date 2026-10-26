@@ -1,0 +1,23 @@
+# 模型权重(720 MB,用 ./download_models.sh 下载)
+models/
+
+# Python 环境
+.venv/
+venv*/
+__pycache__/
+*.pyc
+*.pyo
+
+# 打包产物
+build/
+dist/
+*.app
+
+# 运行时产物
+out/
+*.wav
+*.mp3
+.hf/
+
+# 系统垃圾
+.DS_Store

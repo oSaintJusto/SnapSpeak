@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SnapSpeak</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="logo">
+      <span class="dot"></span>
+      <h1>SnapSpeak</h1>
+    </div>
+    <p class="tagline">划一下屏幕 · 认字 · 念出来</p>
+  </header>
+
+  <main>
+
+   <div class="cols">
+    <div class="col">
+
+    <!-- 快捷键 -->
+    <section class="card">
+      <div class="card-head"><span class="ico">⌨︎</span><h2>快捷键</h2></div>
+      <div class="row">
+        <div class="keyrec" id="keyrec" tabindex="0">
+          <span id="keylabel">⌃⌥S</span>
+        </div>
+        <button class="btn ghost" id="keyclear">清除</button>
+      </div>
+      <p class="hint" id="keyhint">点这里,然后按下你想要的组合键(需包含 ⌘ ⌃ ⌥ ⇧ 中的至少一个)</p>
+    </section>
+
+    <!-- 语音 -->
+    <section class="card">
+      <div class="card-head"><span class="ico">◍</span><h2>语音</h2></div>
+
+      <div class="field">
+        <label>中文音色</label>
+        <div class="inline">
+          <select id="voice_zh"></select>
+          <button class="btn tiny" data-audition="zh">试听</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>英文音色</label>
+        <div class="inline">
+          <select id="voice_en"></select>
+          <button class="btn tiny" data-audition="en">试听</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>语速 <output id="speedout">1.00×</output></label>
+        <input type="range" id="speed" min="0.6" max="1.6" step="0.05" value="1">
+      </div>
+
+      <div class="field">
+        <label>引擎</label>
+        <div class="segmented" id="engine">
+          <button data-val="kokoro" class="on">Kokoro · 音质好</button>
+          <button data-val="say">系统语音 · 秒出</button>
+        </div>
+      </div>
+    </section>
+
+    </div>
+    <div class="col">
+
+    <!-- 英文翻译 -->
+    <section class="card">
+      <div class="card-head">
+        <span class="ico">文</span><h2>英文翻译</h2>
+        <span class="keystate" id="keystate"></span>
+      </div>
+      <div class="inline">
+        <input type="password" id="apikey" placeholder="sk-..." spellcheck="false"
+               autocomplete="off" autocomplete="new-password">
+        <button class="btn tiny" id="savekey">保存并测试</button>
+      </div>
+      <div class="field">
+        <label>译文字号 <output id="fontout">12.5</output></label>
+        <input type="range" id="hud_font_size" min="10" max="20" step="0.5" value="12.5">
+      </div>
+      <p class="hint">识别到英文时朗读原文,同时在小窗口里显示中文译文。Key 存在系统钥匙串,不写进配置文件。</p>
+    </section>
+
+    <!-- 行为 -->
+    <section class="card">
+      <div class="card-head"><span class="ico">⚙︎</span><h2>行为</h2></div>
+
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" id="copy_to_clipboard"><span>复制到剪贴板</span></label>
+        <label class="toggle"><input type="checkbox" id="auto_play"><span>自动朗读</span></label>
+        <label class="toggle"><input type="checkbox" id="notify"><span>完成时通知</span></label>
+        <label class="toggle"><input type="checkbox" id="translate_en"><span>英文显示译文</span></label>
+      </div>
+
+      <div class="field" style="margin-top:14px">
+        <label>截图方式</label>
+        <div class="segmented" id="capture_mode">
+          <button data-val="region" class="on">划选区域</button>
+          <button data-val="window">点选窗口</button>
+        </div>
+      </div>
+    </section>
+
+    </div>
+   </div>
+
+    <!-- 最近 -->
+    <section class="card">
+      <div class="card-head">
+        <span class="ico">◷</span><h2>最近识别</h2>
+        <button class="btn ghost tiny right" id="clearhist">清空</button>
+      </div>
+      <div id="history" class="history"><p class="empty">还没有记录</p></div>
+    </section>
+
+  </main>
+
+  <div class="actionsbar">
+    <button class="btn primary" id="runnow">立即试一次</button>
+    <button class="btn ghost" id="openconfig">配置目录</button>
+  </div>
+
+  <footer>
+    <span id="status">准备就绪</span>
+    <span class="perm" id="perm"></span>
+  </footer>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

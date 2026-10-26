@@ -1,0 +1,11 @@
+kokoro-onnx>=0.6
+misaki[zh]>=0.9.4
+soundfile>=0.12
+pymupdf>=1.24
+python-docx>=1.1
+num2words>=0.5.13
+pyobjc-framework-Cocoa>=10.0
+pyobjc-framework-Quartz>=10.0
+pyobjc-framework-Vision>=10.0
+pyobjc-framework-WebKit>=10.0
+pyobjc-framework-AVFoundation>=10.0
