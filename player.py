@@ -26,6 +26,7 @@ from Foundation import NSURL
 from objc import python_method
 
 W_DEFAULT = 460
+GRAB_H = 14.0              # 顶部拖动把手区高度
 BAR_H = 56                 # 有播放控件时控制条高度
 BAR_H_TEXT = 30            # 纯译文模式控制条高度
 BOTTOM_MARGIN = 64
@@ -58,17 +59,32 @@ def _white(a: float):
 
 
 # ---------------------------------------------------------------- 自定义视图
-class PassThroughLabel(AppKit.NSTextField):
-    """不接收鼠标事件,让拖动穿透到背景(点空白就能拖窗口)。"""
+class HUDPanel(AppKit.NSPanel):
+    """无边框面板默认 canBecomeKeyWindow = NO,文字就选不中。
+    显式允许它成为 key(配合 becomesKeyOnlyIfNeeded,只在选中文字时才抢)。"""
 
-    def hitTest_(self, point):
-        return None
+    def canBecomeKeyWindow(self):
+        return True
 
 
 class HUDContentView(AppKit.NSView):
     """按住拖动整个窗口。"""
 
     hud = objc.ivar()
+
+    def drawRect_(self, rect):
+        """顶部画一条把手,提示这里能按住拖动。"""
+        hud = self.hud
+        if hud is None:
+            return
+        b = self.bounds()
+        pw, ph = 40.0, 4.0
+        x = (b.size.width - pw) / 2.0
+        y = b.size.height - 10.0
+        path = AppKit.NSBezierPath.bezierPathWithRoundedRect_xRadius_yRadius_(
+            AppKit.NSMakeRect(x, y, pw, ph), ph / 2.0, ph / 2.0)
+        AppKit.NSColor.colorWithCalibratedWhite_alpha_(1.0, 0.22).set()
+        path.fill()
 
     def mouseDown_(self, event):
         self._start = AppKit.NSEvent.mouseLocation()
@@ -108,7 +124,7 @@ class ResizeGrip(AppKit.NSView):
         dx = cur.x - self._start.x
         dy = cur.y - self._start.y
         f = self._frame
-        bar = self.hud.bar_height()
+        bar = self.hud.chrome_height()
         vis = AppKit.NSScreen.mainScreen().visibleFrame()
         w = max(MIN_W, f.size.width + dx)
         w = min(w, vis.size.width - 40.0)
@@ -175,6 +191,11 @@ class PlaybackHUD(AppKit.NSObject):
     @python_method
     def bar_height(self):
         return BAR_H if self._controls_visible else BAR_H_TEXT
+
+    @python_method
+    def chrome_height(self):
+        """顶部把手 + 控制条 —— 文字区之外的部分。"""
+        return GRAB_H + self.bar_height()
 
     @python_method
     def show(self, path: str, translation: str = "", on_done=None):
@@ -338,7 +359,7 @@ class PlaybackHUD(AppKit.NSObject):
         else:
             text_h = self._measure_text_h(w - 2 * PAD)
             text_h = min(text_h, MAX_TEXT_H) if has_text else 0.0
-            h = self.bar_height() + (text_h + 18.0 if text_h else 0.0)
+            h = self.chrome_height() + (text_h + 18.0 if text_h else 0.0)
 
         x, y = self._default_origin(w, h)
         self.panel.setFrame_display_(AppKit.NSMakeRect(x, y, w, h), False)
@@ -365,7 +386,7 @@ class PlaybackHUD(AppKit.NSObject):
         f = self.panel.frame()
         w, h = float(f.size.width), float(f.size.height)
         bar_h = self.bar_height()
-        bar_y = h - bar_h
+        bar_y = h - GRAB_H - bar_h
         centre = bar_y + (bar_h - 28) / 2
 
         self.play_btn.setFrame_(AppKit.NSMakeRect(12, centre, 28, 28))
@@ -376,7 +397,7 @@ class PlaybackHUD(AppKit.NSObject):
         slider_w = max(w - 216.0, 60.0)
         self.slider.setFrame_(AppKit.NSMakeRect(50, bar_y + 19, slider_w, 18))
 
-        text_h = max(h - bar_h - 18.0, 0.0)
+        text_h = max(h - self.chrome_height() - 18.0, 0.0)
         self.text_label.setFrame_(
             AppKit.NSMakeRect(PAD, 10.0, max(w - 2 * PAD, 40.0), text_h))
         self.grip.setFrame_(AppKit.NSMakeRect(w - GRIP - 4, 3, GRIP, GRIP))
@@ -388,7 +409,7 @@ class PlaybackHUD(AppKit.NSObject):
                 | AppKit.NSWindowStyleMaskNonactivatingPanel)
         w0 = float(self._saved_size["w"]) if self._saved_size else float(W_DEFAULT)
         h0 = float(self._saved_size["h"]) if self._saved_size else float(BAR_H)
-        panel = AppKit.NSPanel.alloc().initWithContentRect_styleMask_backing_defer_(
+        panel = HUDPanel.alloc().initWithContentRect_styleMask_backing_defer_(
             AppKit.NSMakeRect(0, 0, w0, h0), mask,
             AppKit.NSBackingStoreBuffered, False)
         # 浮在所有 App 普通窗口之上(floating level 的层级判定是全局的),
@@ -481,12 +502,12 @@ class PlaybackHUD(AppKit.NSObject):
         content.addSubview_(close)
 
         # 译文(穿透鼠标,方便拖动)
-        text = PassThroughLabel.alloc().initWithFrame_(
+        text = AppKit.NSTextField.alloc().initWithFrame_(
             AppKit.NSMakeRect(PAD, 10, w0 - 2 * PAD, 16))
         text.setBezeled_(False)
         text.setDrawsBackground_(False)
         text.setEditable_(False)
-        text.setSelectable_(False)
+        text.setSelectable_(True)     # 可以选中、⌘C 复制
         text.setAlignment_(AppKit.NSTextAlignmentLeft)
         text.setTextColor_(_white(0.92))
         text.setFont_(AppKit.NSFont.systemFontOfSize_(self.font_size))
