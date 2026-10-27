@@ -154,6 +154,7 @@ class PlaybackHUD(AppKit.NSObject):
         self.play_btn = None
         self.pin_btn = None
         self.close_btn = None
+        self.copy_btn = None
         self.time_label = None
         self.text_label = None
         self.grip = None
@@ -352,6 +353,8 @@ class PlaybackHUD(AppKit.NSObject):
         has_text = bool(translation)
         self.text_label.setStringValue_(translation or "")
         self.text_label.setHidden_(not has_text)
+        if self.copy_btn is not None:
+            self.copy_btn.setHidden_(not has_text)
 
         w = float(self._saved_size["w"]) if self._saved_size else float(W_DEFAULT)
         if self._saved_size:
@@ -391,10 +394,12 @@ class PlaybackHUD(AppKit.NSObject):
 
         self.play_btn.setFrame_(AppKit.NSMakeRect(12, centre, 28, 28))
         self.pin_btn.setFrame_(AppKit.NSMakeRect(w - 62, centre, 28, 28))
+        if self.copy_btn is not None:
+            self.copy_btn.setFrame_(AppKit.NSMakeRect(w - 96, centre, 28, 28))
         self.close_btn.setFrame_(
             AppKit.NSMakeRect(w - 26, bar_y + (bar_h - 16) / 2, 16, 16))
-        self.time_label.setFrame_(AppKit.NSMakeRect(w - 158, bar_y + 20, 84, 16))
-        slider_w = max(w - 216.0, 60.0)
+        self.time_label.setFrame_(AppKit.NSMakeRect(w - 186, bar_y + 20, 84, 16))
+        slider_w = max(w - 244.0, 60.0)
         self.slider.setFrame_(AppKit.NSMakeRect(50, bar_y + 19, slider_w, 18))
 
         text_h = max(h - self.chrome_height() - 18.0, 0.0)
@@ -477,6 +482,20 @@ class PlaybackHUD(AppKit.NSObject):
         self.time_label = label
         content.addSubview_(label)
 
+        # 复制全部译文
+        copy_btn = AppKit.NSButton.alloc().initWithFrame_(
+            AppKit.NSMakeRect(0, 0, 28, 28))
+        copy_btn.setBordered_(False)
+        copy_btn.setImagePosition_(AppKit.NSImageOnly)
+        copy_btn.setTarget_(self)
+        copy_btn.setAction_("copyAll:")
+        cimg2 = _symbol("doc.on.doc", 13)
+        if cimg2 is not None:
+            copy_btn.setImage_(cimg2)
+        copy_btn.setContentTintColor_(_white(0.55))
+        self.copy_btn = copy_btn
+        content.addSubview_(copy_btn)
+
         # 钉住
         pin = AppKit.NSButton.alloc().initWithFrame_(AppKit.NSMakeRect(0, 0, 28, 28))
         pin.setBordered_(False)
@@ -549,6 +568,28 @@ class PlaybackHUD(AppKit.NSObject):
         self.player.setCurrentTime_(float(sender.doubleValue()))
         self._finished = False
         self._refresh_time()
+
+    def copyAll_(self, sender):
+        """一键把完整译文放进剪贴板。"""
+        text = self.text_label.stringValue()
+        if not text:
+            return
+        pb = AppKit.NSPasteboard.generalPasteboard()
+        pb.clearContents()
+        pb.setString_forType_(text, AppKit.NSPasteboardTypeString)
+        # 短暂变成一个对勾,给个反馈
+        img = _symbol("checkmark", 13)
+        if img is not None:
+            self.copy_btn.setImage_(img)
+        self.copy_btn.setContentTintColor_(AppKit.NSColor.systemGreenColor())
+        AppKit.NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
+            0.9, self, "restoreCopyIcon:", None, False)
+
+    def restoreCopyIcon_(self, timer):
+        img = _symbol("doc.on.doc", 13)
+        if img is not None:
+            self.copy_btn.setImage_(img)
+        self.copy_btn.setContentTintColor_(_white(0.55))
 
     def togglePin_(self, sender):
         self.pinned = not self.pinned
