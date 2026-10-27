@@ -20,6 +20,7 @@ sys.path.insert(0, HERE)
 
 import ocr as ocr_mod  # noqa: E402
 import secret as secret_mod  # noqa: E402
+import textfix  # noqa: E402
 import translate as translate_mod  # noqa: E402
 import tts as tts_mod  # noqa: E402
 
@@ -221,7 +222,8 @@ def run(settings: dict | None = None, source: str | None = None,
         rows = ocr_mod.ocr(img)
         if not rows:
             return {"ok": False, "error": "没识别到文字", "cancelled": False}
-        source_text = "\n".join(r[0] for r in rows)
+        # 把 OCR 的硬换行接回句子,并去掉行尾断词连字符
+        source_text = textfix.clean_ocr_text("\n".join(r[0] for r in rows))
         lang = guess_lang(source_text)
         t_ocr = time.time() - t0
 

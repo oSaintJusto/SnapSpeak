@@ -86,6 +86,24 @@ def _build_engine(lang: str, en_mix: bool = True):
     return Kokoro(mp, vp), None, False
 
 
+def _split_long(s: str, max_chars: int, is_zh: bool) -> list[str]:
+    """把超长句子切成若干块。英文优先在空格处断,别把单词劈开。"""
+    out = []
+    while len(s) > max_chars:
+        cut = max_chars
+        if not is_zh:
+            sp = s.rfind(" ", 0, max_chars)
+            if sp > max_chars * 0.5:      # 找到合理的位置才用,否则硬切
+                cut = sp
+        piece = s[:cut].strip()
+        if piece:
+            out.append(piece)
+        s = s[cut:].lstrip()
+    if s.strip():
+        out.append(s.strip())
+    return out
+
+
 def _chunks(text: str, is_zh: bool, max_chars: int) -> list[str]:
     """按句子切分,再把短句合并成不超过 max_chars 的块。"""
     text = re.sub(r"[ \t]+", " ", text).strip()
@@ -95,12 +113,11 @@ def _chunks(text: str, is_zh: bool, max_chars: int) -> list[str]:
     sents = [s for s in sents if s]
     out, buf = [], ""
     for s in sents:
-        if len(s) > max_chars:  # 超长句子硬切
-            for i in range(0, len(s), max_chars):
-                if buf:
-                    out.append(buf)
-                    buf = ""
-                out.append(s[i : i + max_chars])
+        if len(s) > max_chars:  # 超长句子切开,但别切在单词中间
+            if buf:
+                out.append(buf)
+                buf = ""
+            out.extend(_split_long(s, max_chars, is_zh))
             continue
         if len(buf) + len(s) > max_chars and buf:
             out.append(buf)
@@ -192,7 +209,7 @@ def _read_input(path: str) -> str:
             import pymupdf  # 纯 pip 安装,不依赖 brew
         except ImportError:
             sys.exit("读 PDF 需要 pymupdf: "
-                     "python -m pip install pymupdf")
+                     "venv310/bin/python -m pip install pymupdf")
         with pymupdf.open(path) as doc:
             text = "\n".join(page.get_text() for page in doc)
         if not text.strip():
@@ -203,7 +220,7 @@ def _read_input(path: str) -> str:
             import docx
         except ImportError:
             sys.exit("读 docx 需要 python-docx: "
-                     "python -m pip install python-docx")
+                     "venv310/bin/python -m pip install python-docx")
         return "\n".join(p.text for p in docx.Document(path).paragraphs)
     with open(path, "r", encoding="utf-8", errors="ignore") as f:
         return f.read()

@@ -34,6 +34,7 @@ sys.path.insert(0, HERE)
 import Quartz  # noqa: E402
 
 import ocr as ocr_mod  # noqa: E402
+import textfix  # noqa: E402
 import tts as tts_mod  # noqa: E402
 
 TITLE = "截图朗读"
@@ -171,7 +172,7 @@ def main():
             notify("没识别到文字")
             return 1
 
-        text = "\n".join(r[0] for r in rows)
+        text = textfix.clean_ocr_text("\n".join(r[0] for r in rows))
         lang = args.lang or guess_lang(text)
 
         # ---- 3. 输出 + 复制 ----

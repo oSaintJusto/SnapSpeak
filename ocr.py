@@ -139,6 +139,8 @@ def main():
                     help="语言优先级,逗号分隔")
     ap.add_argument("-c", "--min-confidence", type=float, default=0.0)
     ap.add_argument("--json", action="store_true", help="输出 JSON")
+    ap.add_argument("--clean", action="store_true",
+                    help="整理文本:接回硬换行、去掉行尾断词连字符")
     args = ap.parse_args()
 
     source = "--paste" if args.paste else args.image
@@ -163,7 +165,11 @@ def main():
              for t, c, b in rows],
             ensure_ascii=False, indent=2))
     else:
-        print("\n".join(t for t, _, _ in rows))
+        joined = "\n".join(t for t, _, _ in rows)
+        if args.clean:
+            import textfix
+            joined = textfix.clean_ocr_text(joined)
+        print(joined)
     return 0
 
 
