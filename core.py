@@ -43,6 +43,8 @@ DEFAULTS = {
     "auto_play": True,
     "capture_mode": "region",    # region | window
     "translate_en": True,        # 英文时显示中文译文(朗读仍是英文)
+    "fix_greek": True,           # 修复被认成拉丁字母的 π 等符号
+    "text_replacements": [],     # 自定义字面替换 [["原","新"], ...]
     "pin_translation": False,    # 译窗是否常驻
     "hud_pos": None,             # 悬浮面板位置 {x,y}
     "hud_size": None,            # 用户手动缩放过的大小 {w,h}
@@ -223,7 +225,10 @@ def run(settings: dict | None = None, source: str | None = None,
         if not rows:
             return {"ok": False, "error": "没识别到文字", "cancelled": False}
         # 把 OCR 的硬换行接回句子,并去掉行尾断词连字符
-        source_text = textfix.clean_ocr_text("\n".join(r[0] for r in rows))
+        source_text = textfix.clean_ocr_text(
+            "\n".join(r[0] for r in rows),
+            fix_greek=cfg.get("fix_greek", True),
+            replacements=cfg.get("text_replacements") or ())
         lang = guess_lang(source_text)
         t_ocr = time.time() - t0
 

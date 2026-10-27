@@ -104,10 +104,54 @@ def _merge_hyphen(prev: str, nxt: str) -> str:
     return head + nxt                              # 保底:去掉连字符
 
 
-def clean_ocr_text(text: str) -> str:
+# ---------------------------------------------------------------- 希腊字母
+# Vision 没有希腊语模型(supportedRecognitionLanguages 里没有 el-GR),
+# π 一类符号会被强行塞成拉丁字符。实测:
+#     π0.5   -> "T0.5" / "to.5"
+#     π0     -> "TO"
+# 下面只挑「上下文足够明确」的模式修,避免误伤正常英文:
+# 字母紧跟 ".数字" 在英文里几乎不存在,所以这条是安全的。
+# 注意:Vision 有时给出的是 "70.5"(数字零),和真实的 70.5 无法区分,不做处理。
+GREEK_RULES = (
+    (re.compile(r"\b[Tt]0\.(\d)"), "π0.\\1"),      # T0.5  -> π0.5
+    (re.compile(r"\b[Tt][Oo]\.(\d)"), "π0.\\1"),   # to.5  -> π0.5
+    (re.compile(r"\b[Nn][Oo]\.(\d)"), "π0.\\1"),   # no.5  -> π0.5
+    (re.compile(r"\b[Tt][Oo]\b(?=\s*[（(])"), "π0"),  # TO(   -> π0(
+    (re.compile(r"\b[Nn][Oo]\b(?=\s*[（(])"), "π0"),  # no(   -> π0(
+)
+
+
+def repair_greek(text: str) -> str:
+    """把被认成拉丁字母的 π 修回来(π 在 espeak 里能正确读作 "pi")。"""
+    if not text:
+        return text
+    for pattern, repl in GREEK_RULES:
+        text = pattern.sub(repl, text)
+    return text
+
+
+def apply_literal(text: str, pairs) -> str:
+    """用户自定义的字面替换,按顺序执行。pairs 是 [(from, to), ...]。"""
+    if not text or not pairs:
+        return text
+    for item in pairs:
+        try:
+            a, b = item[0], item[1]
+        except (TypeError, IndexError, KeyError):
+            continue
+        if a:
+            text = text.replace(str(a), str(b))
+    return text
+
+
+def clean_ocr_text(text: str, fix_greek: bool = True,
+                   replacements=()) -> str:
     """把 OCR 出来的多行文本整理成通顺的段落。"""
     if not text or "\n" not in text:
-        return WS.sub(" ", text) if text else text
+        one = WS.sub(" ", text) if text else text
+        if fix_greek:
+            one = repair_greek(one)
+        return apply_literal(one, replacements)
 
     lines = text.split("\n")
     out: list[str] = []
@@ -136,4 +180,7 @@ def clean_ocr_text(text: str) -> str:
 
         out[-1] = prev + _sep(prev, nxt) + nxt     # 同一段内的硬换行
 
-    return WS.sub(" ", "\n".join(out))
+    result = WS.sub(" ", "\n".join(out))
+    if fix_greek:
+        result = repair_greek(result)
+    return apply_literal(result, replacements)

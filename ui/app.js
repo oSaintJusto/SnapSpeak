@@ -96,7 +96,29 @@ function render() {
   fillSelect(document.getElementById("voice_zh"), S.voices_zh || [], s.voice_zh);
   fillSelect(document.getElementById("voice_en"), S.voices_en || [], s.voice_en);
 
-  // 译文字号
+  // 自定义替换
+  const trEl = document.getElementById("text_replacements");
+  if (trEl && document.activeElement !== trEl) {
+    trEl.value = (s.text_replacements || [])
+      .map((p) => (p && p.length >= 2 ? `${p[0]}=>${p[1]}` : ""))
+      .filter(Boolean).join("\n");
+  }
+
+  // 自定义替换
+const trBox = document.getElementById("text_replacements");
+if (trBox) {
+  trBox.onchange = () => {
+    const pairs = trBox.value.split("\n").map((l) => l.trim()).filter(Boolean)
+      .map((l) => {
+        const i = l.indexOf("=>");
+        return i > 0 ? [l.slice(0, i).trim(), l.slice(i + 2).trim()] : null;
+      }).filter(Boolean);
+    trBox.value = pairs.map((p) => `${p[0]}=>${p[1]}`).join("\n");
+    save({ text_replacements: pairs });
+  };
+}
+
+// 译文字号
   const fs = document.getElementById("hud_font_size");
   if (fs) {
     fs.value = s.hud_font_size ?? 12.5;
@@ -125,6 +147,8 @@ function render() {
 
   // 开关
   document.getElementById("translate_en").checked = s.translate_en !== false;
+  const fg = document.getElementById("fix_greek");
+  if (fg) fg.checked = s.fix_greek !== false;
   document.getElementById("copy_to_clipboard").checked = !!s.copy_to_clipboard;
   document.getElementById("auto_play").checked = !!s.auto_play;
   document.getElementById("notify").checked = !!s.notify;
@@ -290,7 +314,7 @@ for (const id of ["engine", "capture_mode"]) {
 }
 
 // 开关
-for (const id of ["copy_to_clipboard", "auto_play", "notify", "translate_en"]) {
+for (const id of ["copy_to_clipboard", "auto_play", "notify", "translate_en", "fix_greek"]) {
   document.getElementById(id).onchange = (e) => save({ [id]: e.target.checked });
 }
 

@@ -98,6 +98,7 @@
         <label class="toggle"><input type="checkbox" id="auto_play"><span>自动朗读</span></label>
         <label class="toggle"><input type="checkbox" id="notify"><span>完成时通知</span></label>
         <label class="toggle"><input type="checkbox" id="translate_en"><span>英文显示译文</span></label>
+        <label class="toggle"><input type="checkbox" id="fix_greek"><span>修正 π 符号</span></label>
       </div>
 
       <div class="field" style="margin-top:14px">
@@ -111,6 +112,14 @@
 
     </div>
    </div>
+
+    <!-- 识别修正 -->
+    <section class="card">
+      <div class="card-head"><span class="ico">✎</span><h2>识别修正</h2></div>
+      <textarea id="text_replacements" rows="2" spellcheck="false"
+        placeholder="no.5=>π0.5&#10;thcir=>their"></textarea>
+      <p class="hint">一行一条,格式 <b>原文=&gt;替换</b>。OCR 认错的符号、人名都可以在这里兜底。</p>
+    </section>
 
     <!-- 最近 -->
     <section class="card">

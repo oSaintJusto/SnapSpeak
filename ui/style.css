@@ -117,6 +117,17 @@ select {
   padding: 0 8px; font: inherit; font-size: 12.5px; cursor: pointer;
 }
 
+textarea {
+  width: 100%; height: 50px; resize: none;
+  border-radius: 7px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--text);
+  padding: 6px 8px; font: inherit; font-size: 12px; line-height: 1.4;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  outline: none; user-select: text;
+}
+textarea:focus { border-color: var(--accent); }
+textarea::placeholder { color: var(--muted); font-family: inherit; }
+
 .field input[type=password] {
   flex: 1; height: 27px; border-radius: 7px;
   border: 1px solid var(--line); background: var(--bg); color: var(--text);
@@ -206,7 +217,7 @@ input[type=range]::-webkit-slider-thumb {
 .actionsbar .primary { flex: 1; height: 36px; }
 .actionsbar .ghost { height: 36px; }
 
-.history { display: flex; flex-direction: column; gap: 1px; max-height: 84px; overflow-y: auto; }
+.history { display: flex; flex-direction: column; gap: 1px; max-height: 60px; overflow-y: auto; }
 .history::-webkit-scrollbar { width: 0; }
 .history .item {
   display: flex; align-items: center; gap: 8px;

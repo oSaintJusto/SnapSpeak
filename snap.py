@@ -172,7 +172,8 @@ def main():
             notify("没识别到文字")
             return 1
 
-        text = textfix.clean_ocr_text("\n".join(r[0] for r in rows))
+        text = textfix.clean_ocr_text("\n".join(r[0] for r in rows),
+                                      fix_greek=True)
         lang = args.lang or guess_lang(text)
 
         # ---- 3. 输出 + 复制 ----

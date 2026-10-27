@@ -317,7 +317,7 @@ class AppDelegate(AppKit.NSObject):
 
     @python_method
     def _build_window(self):
-        rect = AppKit.NSMakeRect(0, 0, 760, 700)
+        rect = AppKit.NSMakeRect(0, 0, 760, 790)
         mask = (AppKit.NSWindowStyleMaskTitled
                 | AppKit.NSWindowStyleMaskClosable
                 | AppKit.NSWindowStyleMaskMiniaturizable)
